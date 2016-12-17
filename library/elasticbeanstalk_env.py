@@ -301,7 +301,10 @@ def main():
     if state == 'list':
         try:
             env = describe_env(ebs, app_name, env_name)
-            result = dict(changed=False, env=env)
+            if env is not None:
+               result = dict(changed=False, env=env)
+            else:
+               result = dict(changed=False, output='Environment not found')
         except Exception, err:
             error_msg = boto_exception(err)
             module.fail_json(msg=error_msg)
@@ -312,7 +315,10 @@ def main():
             result = dict(changed=False, env=env)
         except Exception, err:
             error_msg = boto_exception(err)
-            module.fail_json(msg=error_msg)
+            if 'No Environment found for EnvironmentName = \'%s\'' % env_name in error_msg:
+                result = dict(changed=False, output='Environment not found')
+            else:
+                module.fail_json(msg=error_msg)
 
     if module.check_mode and (state != 'list' or state != 'details'):
         check_env(ebs, app_name, env_name, module)
